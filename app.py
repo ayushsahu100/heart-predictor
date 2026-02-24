@@ -1,15 +1,11 @@
 from flask import Flask, render_template, request
-import os
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
 app = Flask(__name__)
 
-# --- Load dataset safely ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # current folder
-data_path = os.path.join(BASE_DIR, "heart.csv")
-data = pd.read_csv(data_path)
-
+# Load dataset and train model
+data = pd.read_csv("heart.csv")
 X = data.drop("condition", axis=1)
 y = data["condition"]
 model = RandomForestClassifier()
