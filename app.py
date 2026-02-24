@@ -5,26 +5,33 @@ from sklearn.ensemble import RandomForestClassifier
 
 app = Flask(__name__)
 
-# Load dataset safely (important for Render Linux environment)
-data_path = os.path.join(os.path.dirname(__file__), "heart.csv")
-data = pd.read_csv(data_path)
+model = None
+X_columns = None
 
-X = data.drop("condition", axis=1)
-y = data["condition"]
+def load_model():
+    global model, X_columns
+    
+    data_path = os.path.join(os.path.dirname(__file__), "heart.csv")
+    data = pd.read_csv(data_path)
 
-model = RandomForestClassifier()
-model.fit(X, y)
+    X = data.drop("condition", axis=1)
+    y = data["condition"]
 
+    X_columns = X.columns.tolist()
 
-@app.route("/", methods=["GET"])
+    model = RandomForestClassifier()
+    model.fit(X, y)
+
+load_model()
+
+@app.route("/")
 def home():
     return render_template("index.html")
-
 
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        user_input = [float(request.form[col]) for col in X.columns]
+        user_input = [float(request.form[col]) for col in X_columns]
         prediction = model.predict([user_input])[0]
 
         if prediction == 1:
@@ -33,10 +40,10 @@ def predict():
             result = "No Heart Disease ✅"
 
     except Exception as e:
-        result = "Error: Please enter valid numbers for all fields"
+        result = f"Error: {str(e)}"
 
     return render_template("index.html", result=result)
 
-
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
